@@ -72,15 +72,15 @@ local opt = cmd:parse(arg)
 
 local function string2word(s)
   local t = {}
-  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(t, opt.bpe_BOT_marker) end
-  if s:sub(1, separators.ph_marker_open:len()) == separators.ph_marker_open then
-    table.insert(t, s)
-  else
-    for _, c in unicode.utf8_iter(s) do
-      table.insert(t, c)
-    end
+  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then
+    table.insert(t, opt.bpe_BOT_marker)
   end
-  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(t, opt.bpe_EOT_marker) end
+  for _, c in unicode.utf8_iter(s) do
+    table.insert(t, c)
+  end
+  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then
+    table.insert(t, opt.bpe_EOT_marker)
+  end
   return table.concat(t, " ")
 end
 
@@ -146,7 +146,9 @@ local function get_vocabulary()
     local words = onmt.utils.Features.extract(toks)
     for i = 1, #words do
       local word = words[i]
-      vocab[word] = (vocab[word] or 0) + 1
+      if not word:find(separators.ph_marker_open) then
+        vocab[word] = (vocab[word] or 0) + 1
+      end
     end
     l = io.read()
     count = count + 1
@@ -165,7 +167,7 @@ local function get_pair_statistics(vocab)
   for idx, word_freq in ipairs(vocab) do
     local word = word_freq[1]
     local freq = word_freq[2]
-    local chars = string.split (word, " ")
+    local chars = onmt.utils.String.split(word, " ")
     local prev_char = chars[1]
     for i=2, #chars do
       local bigram = prev_char .. " " .. chars[i]
@@ -179,14 +181,14 @@ end
 
 local function replace_pair(pair, vocab, indices)
   local changed = {}
-  local bigram = string.split (pair, " ")
+  local bigram = onmt.utils.String.split(pair, " ")
 
   for idx, ifreq in pairs (indices[pair]) do
     if not (ifreq < 1) then
       local word_freq = vocab[idx]
       local word = word_freq[1]
       local freq = word_freq[2]
-      local new_word = replace(string.split(word, ' '), bigram)
+      local new_word = replace(onmt.utils.String.split(word, ' '), bigram)
       vocab[idx] = tds.Vec({new_word, freq})
       table.insert(changed, {idx, new_word, word, freq})
     end
@@ -203,15 +205,15 @@ end
 local function update_pair_statistics(pair, changed, stats, indices)
   stats[pair] = 0
   indices[pair] = tds.Hash()
-  local bigram = string.split (pair, " ")
+  local bigram = onmt.utils.String.split(pair, " ")
   local first = bigram[1]
   local second = bigram[2]
   local new_pair = first .. second
   for ii = 1, #changed do
     local c = changed[ii]
     local idx = c [1]
-    local new_word = string.split(c[2], " ")
-    local old_word = string.split(c[3], " ")
+    local new_word = onmt.utils.String.split(c[2], " ")
+    local old_word = onmt.utils.String.split(c[3], " ")
     local freq = c[4]
 
     local i = 1

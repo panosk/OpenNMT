@@ -11,6 +11,7 @@
 * Display oov rate (source/target) in translate
 * Introduce `max_tokens` allowing longer sentence handling and larger batch size
 * Add `-log_tag` option to add tag in logs for better automatic processing
+* The `withAttn` option in rest translation server now also returns the source and target tokens
 
 ### Fixes and improvements
 
@@ -21,6 +22,7 @@
 * Fix language model sampling mode
 * Fix retraining from a language model
 * Fix `-update_vocab` option for language models
+* Fix error when using translation-based validation metrics
 * Correct error handling for all file open commands
 * Reduce the Docker image size
 
